@@ -17,5 +17,5 @@ add_library(stratum::stratum ALIAS stratum )
 
 target_compile_features(stratum INTERFACE cxx_std_20)
 target_include_directories(stratum INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
 )
