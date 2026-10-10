@@ -1,8 +1,10 @@
 #pragma once
 
+#include <concepts>
 #include <coroutine>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 namespace stratum::scheduler {
 
@@ -25,6 +27,7 @@ public:
       : object_(handle.address()), func(details::coroutine_resume_task) {}
 
   template<typename F>
+    requires(!std::same_as<std::remove_cvref_t<F>, scheduler_task_t> && std::invocable<F&>)
   scheduler_task_t(F& callable)
       : object_(std::addressof(callable)), func(details::invoke_resume_task<F>) {}
 
