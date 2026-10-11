@@ -7,6 +7,7 @@
 #include <chrono>
 #include <exception>
 #include <iostream>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -23,26 +24,33 @@ public:
 
   ~round_robing_scheduler_t() {
     stop();
+    for (auto& worker : workers_) {
+      worker.join();
+    }
   }
 
   void add_task(scheduler_task_t task) {
     queue_.push(task);
   }
 
-  void schedule(size_t threads_count) {
-    workers_.reserve(threads_count);
+  void schedule(size_t threads_count, bool reuse_thread = true) {
+    if (threads_count == 0) {
+      throw std::runtime_error("invalid threads count");
+    }
+
+    const size_t base_threads_count = threads_count - 1 * reuse_thread;
+    workers_.reserve(base_threads_count);
     work_.store(true, std::memory_order_relaxed);
-    for (size_t i = 0; i < threads_count; ++i) {
+    for (size_t i = 0; i < base_threads_count; ++i) {
       workers_.emplace_back([this] { worker_loop(); });
+    }
+    if (reuse_thread) {
+      worker_loop();
     }
   }
 
   void stop() {
     work_.store(false, std::memory_order_relaxed);
-    for (auto& worker : workers_) {
-      worker.join();
-    }
-    workers_.clear();
   }
 
 private:
